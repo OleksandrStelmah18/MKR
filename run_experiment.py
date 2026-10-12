@@ -12,7 +12,7 @@ os.chdir(Path(__file__).parent)
 
 from src.asr import transcribe
 from src.config import load_config
-from src.enhance import get_method
+from src.enhance import apply_method
 from src.loader import read_audio
 from src.metrics import count_errors, normalize
 
@@ -48,8 +48,7 @@ def main():
           f"залишилось {len(todo)} із {len(allrows)}")
 
     for _, r in tqdm(todo.iterrows(), total=len(todo)):
-        audio = read_audio(r["noisy_path"])
-        audio = get_method(r["method"])(audio)
+        audio = apply_method(r["method"], r["noisy_path"])
         hyp = transcribe(audio, model_name, lang)
         ref_n, hyp_n = normalize(r["text"]), normalize(hyp)
         errors, words = count_errors(ref_n, hyp_n)

@@ -9,7 +9,7 @@ from tqdm import tqdm
 os.chdir(Path(__file__).parent)
 
 from src.config import load_config
-from src.enhance import get_method
+from src.enhance import apply_method
 from src.loader import read_audio
 
 from pystoi import stoi
@@ -60,7 +60,7 @@ def main():
 
     for _, r in tqdm(todo.iterrows(), total=len(todo)):
         clean = read_audio(r["clean_path"])
-        est = get_method(r["method"])(read_audio(r["noisy_path"]))
+        est = apply_method(r["method"], r["noisy_path"])
         n = min(len(clean), len(est))
         clean, est = clean[:n].astype(np.float64), est[:n].astype(np.float64)
         pd.DataFrame([{

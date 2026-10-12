@@ -60,3 +60,12 @@ def get_method(name):
     if name not in METHODS:
         raise KeyError(f"Невідомий метод '{name}'. Доступні: {list(METHODS)}")
     return METHODS[name]
+
+from .loader import read_audio
+
+
+def apply_method(name, noisy_path):
+    if name.startswith("pre_"):
+        enhanced = str(noisy_path).replace("noisy_test", f"enhanced/{name[4:]}")
+        return read_audio(enhanced)
+    return get_method(name)(read_audio(noisy_path))
