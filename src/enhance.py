@@ -26,11 +26,33 @@ def spectral_subtraction(x, sr=16000, alpha=2.0, beta=0.05, nperseg=512, q=0.2):
         y = np.pad(y, (0, len(x) - len(y)))
     return y.astype(np.float32)
 
+_demucs = {}
+
+def demucs_dns64(x, sr=16000):
+    """Demucs (facebookresearch/denoiser), модель dns64, готові ваги."""
+    import torch
+    from denoiser import pretrained
+    from denoiser.dsp import convert_audio
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if "m" not in _demucs:
+        _demucs["m"] = pretrained.dns64().to(device).eval()
+    model = _demucs["m"]
+
+    wav = torch.from_numpy(x).float().unsqueeze(0).to(device)       # (1, час)
+    wav = convert_audio(wav, sr, model.sample_rate, model.chin)
+    with torch.no_grad():
+        out = model(wav[None])[0]                                    # (1, час)
+    y = out.squeeze(0).cpu().numpy().astype(np.float32)
+    y = y[:len(x)]
+    if len(y) < len(x):
+        y = np.pad(y, (0, len(x) - len(y)))
+    return y
 
 METHODS = {
     "none": identity,
     "spectral": spectral_subtraction,
-    "spectral_mild": partial(spectral_subtraction, alpha=1.0, beta=0.15),
+    "demucs": demucs_dns64,
 }
 
 
