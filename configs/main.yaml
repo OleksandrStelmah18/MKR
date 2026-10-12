@@ -1,0 +1,24 @@
+seed: 42
+sample_rate: 16000
+
+paths:
+  librispeech: data/raw/LibriSpeech
+  noise: data/raw/noise
+  results: results
+
+data:
+  test_subset: test-clean
+  n_utterances: 10          # для розробки на CPU; на Colab збільшимо до 300
+  min_duration: 2.0
+  max_duration: 15.0
+
+noise:
+  snr_db: [-5, 0, 5, 10, 15, 20]
+  train_envs: [DKITCHEN, NPARK, OOFFICE, PCAFETER, TBUS]
+  test_envs: [NRIVER, OMEETING, SPSQUARE, STRAFFIC, TMETRO]
+  extra_types: [babble, white]
+  min_chunk_power: 1.0e-7
+
+asr:
+  model: base
+  language: en

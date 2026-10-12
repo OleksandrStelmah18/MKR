@@ -1,0 +1,9 @@
+numpy
+scipy
+soundfile
+pyyaml
+pandas
+matplotlib
+tqdm
+jiwer
+openai-whisper
