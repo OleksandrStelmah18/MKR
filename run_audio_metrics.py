@@ -56,7 +56,10 @@ def main():
     out = res_dir / "audio_metrics.csv"
     done = set(pd.read_csv(out)["key"]) if out.exists() else set()
     todo = rows[~rows["key"].isin(done)]
-    keep = [i for i, m, p in zip(todo.index, todo["method"], todo["noisy_path"]) if is_available(m, p)]
+
+    # для заздалегідь порахованих методів беремо лише ті файли, що вже існують
+    keep = [i for i, m, pth in zip(todo.index, todo["method"], todo["noisy_path"])
+            if is_available(m, pth)]
     todo = todo.loc[keep]
     print(f"Залишилось обробити {len(todo)} із {len(rows)}")
 
@@ -74,9 +77,11 @@ def main():
         }]).to_csv(out, mode="a", header=not out.exists(), index=False)
 
     df = pd.read_csv(out)
+    df = df[df["method"].isin(args.methods)]
     for metric in ["si_sdr", "stoi", "pesq"]:
         print(f"\n{metric} (середнє):")
-        print(df.pivot_table(index="method", columns="snr", values=metric, aggfunc="mean").round(2).to_string())
+        print(df.pivot_table(index="method", columns="snr", values=metric,
+                             aggfunc="mean").round(2).to_string())
 
 
 if __name__ == "__main__":

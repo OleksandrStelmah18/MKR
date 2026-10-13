@@ -13,7 +13,6 @@ os.chdir(Path(__file__).parent)
 from src.asr import transcribe
 from src.config import load_config
 from src.enhance import apply_method, is_available
-from src.loader import read_audio
 from src.metrics import count_errors, normalize
 
 
@@ -44,7 +43,10 @@ def main():
     out = res_dir / f"experiment_{model_name}.csv"
     done = set(pd.read_csv(out)["key"]) if out.exists() else set()
     todo = allrows[~allrows["key"].isin(done)]
-    keep = [i for i, m, p in zip(todo.index, todo["method"], todo["noisy_path"]) if is_available(m, p)]
+
+    # для заздалегідь порахованих методів беремо лише ті файли, що вже існують
+    keep = [i for i, m, pth in zip(todo.index, todo["method"], todo["noisy_path"])
+            if is_available(m, pth)]
     todo = todo.loc[keep]
     print(f"Whisper '{model_name}', методи {args.methods}: "
           f"залишилось {len(todo)} із {len(allrows)}")
@@ -65,18 +67,20 @@ def main():
     c = df[df["noise"] == "clean"]
     print(f"\nWER на чистих записах: {100 * c['errors'].sum() / c['words'].sum():.1f}%")
 
-    nz = df[(df["noise"] != "clean") & (df["method"].isin(args.methods))]
+    nz = df[(df["noise"] != "clean") & (df["method"].isin(args.methods))].copy()
     s = nz.groupby(["method", "snr"])[["errors", "words"]].sum()
     s["wer"] = 100 * s["errors"] / s["words"]
     table = s["wer"].unstack("snr").round(1)
     print("\nWER (%) усереднено за всіма типами шуму:")
     print(table.to_string())
-    nz = nz.assign(hyp_words=nz["hyp"].fillna("").astype(str).str.split().str.len())
+
+    nz["hyp_words"] = nz["hyp"].fillna("").astype(str).str.split().str.len()
     nz["halluc"] = nz["hyp_words"] > 2 * nz["words"]
     nz["utt_wer_clip"] = (nz["errors"] / nz["words"]).clip(upper=1.0)
 
     print("\nСередній WER по фразах, обмежений 100% (%):")
-    print((100 * nz.groupby(["method", "snr"])["utt_wer_clip"].mean()).unstack("snr").round(1).to_string())
+    print((100 * nz.groupby(["method", "snr"])["utt_wer_clip"].mean())
+          .unstack("snr").round(1).to_string())
 
     print("\nКількість галюцинацій (hyp > 2× еталону):")
     print(nz.groupby(["method", "snr"])["halluc"].sum().unstack("snr").to_string())
