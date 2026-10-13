@@ -69,3 +69,13 @@ def apply_method(name, noisy_path):
         enhanced = str(noisy_path).replace("noisy_test", f"enhanced/{name[4:]}")
         return read_audio(enhanced)
     return get_method(name)(read_audio(noisy_path))
+
+from pathlib import Path
+
+
+def is_available(name, noisy_path):
+    """Для методів pre_* готові файли можуть бути не для всіх SNR."""
+    if name.startswith("pre_"):
+        enhanced = str(noisy_path).replace("noisy_test", f"enhanced/{name[4:]}")
+        return Path(enhanced).exists()
+    return True

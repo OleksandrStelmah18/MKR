@@ -12,7 +12,7 @@ os.chdir(Path(__file__).parent)
 
 from src.asr import transcribe
 from src.config import load_config
-from src.enhance import apply_method
+from src.enhance import apply_method, is_available
 from src.loader import read_audio
 from src.metrics import count_errors, normalize
 
@@ -44,6 +44,8 @@ def main():
     out = res_dir / f"experiment_{model_name}.csv"
     done = set(pd.read_csv(out)["key"]) if out.exists() else set()
     todo = allrows[~allrows["key"].isin(done)]
+    keep = [i for i, m, p in zip(todo.index, todo["method"], todo["noisy_path"]) if is_available(m, p)]
+    todo = todo.loc[keep]
     print(f"Whisper '{model_name}', методи {args.methods}: "
           f"залишилось {len(todo)} із {len(allrows)}")
 

@@ -9,7 +9,7 @@ from tqdm import tqdm
 os.chdir(Path(__file__).parent)
 
 from src.config import load_config
-from src.enhance import apply_method
+from src.enhance import apply_method, is_available
 from src.loader import read_audio
 
 from pystoi import stoi
@@ -56,6 +56,8 @@ def main():
     out = res_dir / "audio_metrics.csv"
     done = set(pd.read_csv(out)["key"]) if out.exists() else set()
     todo = rows[~rows["key"].isin(done)]
+    keep = [i for i, m, p in zip(todo.index, todo["method"], todo["noisy_path"]) if is_available(m, p)]
+    todo = todo.loc[keep]
     print(f"Залишилось обробити {len(todo)} із {len(rows)}")
 
     for _, r in tqdm(todo.iterrows(), total=len(todo)):
